@@ -30,7 +30,6 @@ function parseRelationships (raw) {
   if (!raw) return []
   const list = Array.isArray(raw) ? raw : [raw]
   return list.map((str) => {
-    // Split on ':' but limit to 6 parts to handle org names that may contain colons
     const parts = str.split(':')
     return {
       relationshipId: parts[0] || '',
@@ -87,13 +86,11 @@ function parseTokenClaims (tokenSet) {
   const relationships = parseRelationships(claims.relationships)
   const roles = parseRoles(claims.roles)
 
-  // Enrich roles with human-readable status label
   const enrichedRoles = roles.map((r) => ({
     ...r,
     statusLabel: ROLE_STATUS_LABELS[parseInt(r.status, 10)] || r.status
   }))
 
-  // Map amr to human-readable labels
   const rawAmr = claims.amr
   const amrList = Array.isArray(rawAmr) ? rawAmr : (rawAmr ? [rawAmr] : [])
   const amrLabels = amrList.map((m) => AMR_LABELS[m] || m)
@@ -121,41 +118,39 @@ function parseTokenClaims (tokenSet) {
 }
 
 /**
- * Middleware: require an authenticated session.
+ * Hapi pre-method: require an authenticated session.
  * Silently refreshes the access token if expired and a refresh token is available.
+ * Return h.continue to proceed, or h.redirect('/login').takeover() to redirect.
  */
-async function requireAuth (req, res, next) {
-  if (!req.session.tokens) {
-    req.session.returnTo = req.originalUrl
-    return req.session.save(() => res.redirect('/login'))
+async function requireAuth (request, h) {
+  if (!request.yar.get('tokens')) {
+    request.yar.set('returnTo', request.path)
+    return h.redirect('/login').takeover()
   }
 
-  const { access_token, refresh_token } = req.session.tokens
+  const tokens = request.yar.get('tokens')
+  const { access_token, refresh_token } = tokens
 
   if (access_token && isAccessTokenExpired(access_token) && refresh_token) {
     try {
       const client = await getOidcClient()
       const refreshed = await client.refresh(refresh_token)
 
-      req.session.tokens = {
-        id_token: refreshed.id_token || req.session.tokens.id_token,
+      request.yar.set('tokens', {
+        id_token: refreshed.id_token || tokens.id_token,
         access_token: refreshed.access_token,
         refresh_token: refreshed.refresh_token || refresh_token,
         expires_at: refreshed.expires_at
-      }
-      req.session.user = parseTokenClaims(refreshed)
-
-      return req.session.save(() => next())
+      })
+      request.yar.set('user', parseTokenClaims(refreshed))
     } catch (err) {
       console.error('[auth] Token refresh failed:', err.message)
-      req.session.destroy(() => {
-        res.redirect('/auth/login')
-      })
-      return
+      request.yar.reset()
+      return h.redirect('/login').takeover()
     }
   }
 
-  next()
+  return h.continue
 }
 
 module.exports = { requireAuth, parseTokenClaims, parseRelationships, parseRoles }

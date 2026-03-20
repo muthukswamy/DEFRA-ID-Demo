@@ -8,6 +8,7 @@
 {% from "govuk/components/breadcrumbs/macro.njk" import govukBreadcrumbs %}
 {% from "govuk/components/notification-banner/macro.njk" import govukNotificationBanner %}
 {% from "govuk/components/inset-text/macro.njk" import govukInsetText %}
+{% from "govuk/components/service-navigation/macro.njk" import govukServiceNavigation %}
 
 <!DOCTYPE html>
 <html lang="en" class="govuk-template">
@@ -31,7 +32,10 @@
     <a href="#main-content" class="govuk-skip-link" data-module="govuk-skip-link">Skip to main content</a>
 
     {{ govukHeader({
-      homepageUrl: "https://www.gov.uk/",
+      homepageUrl: "https://www.gov.uk/"
+    }) }}
+
+    {{ govukServiceNavigation({
       serviceName: serviceName,
       serviceUrl: serviceUrl,
       navigation: ([
@@ -41,13 +45,15 @@
           active: activePage == "dashboard"
         },
         {
-          html: "<a href='" + defraAccountUrl + "' target='_blank' rel='noopener noreferrer' class='govuk-header__link'>Manage account <span class='govuk-visually-hidden'>(opens in new tab)</span></a>"
+          text: "Manage account",
+          href: defraAccountUrl,
+          attributes: { target: "_blank", rel: "noopener noreferrer" }
         },
         {
           href: "/logout",
           text: "Sign out"
         }
-      ] if isAuthenticated else [])
+      ] if isAuthenticated else undefined)
     }) }}
 
     <div class="govuk-width-container">

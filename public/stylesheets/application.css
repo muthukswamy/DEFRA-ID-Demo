@@ -4,6 +4,11 @@
  * GOV.UK Frontend provides all core styles; only add overrides here.
  */
 
+/* Right-align service navigation items, keeping service name left */
+.govuk-service-navigation__list {
+  justify-content: flex-end;
+}
+
 /* Code/monospace values in summary lists */
 code {
   font-family: "Courier New", Courier, monospace;

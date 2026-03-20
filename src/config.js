@@ -16,7 +16,8 @@ const config = Object.freeze({
   enableAuth: process.env.ENABLE_DEFRA_ID !== 'false',
 
   session: {
-    secret: process.env.SESSION_SECRET || 'dev-session-secret-change-in-production'
+    secret: process.env.SESSION_SECRET || 'dev-session-secret-change-in-production',
+    maxAge: 60 * 60 * 1000 // 1 hour in milliseconds (used by Yar cookieOptions.ttl)
   },
 
   oidc: {

@@ -1,18 +1,13 @@
 'use strict'
 
-const express = require('express')
 const { generators } = require('openid-client')
 const { getOidcClient, config } = require('../config')
 const { parseTokenClaims } = require('../middleware/auth')
 
-const router = express.Router()
-
 // ---------------------------------------------------------------------------
 // Server-side PKCE store — keyed by state value, auto-expires after 10 minutes.
-// This avoids SameSite cookie issues: B2C uses response_mode=form_post which
-// is a cross-site POST, so browsers strip SameSite=Lax cookies. The state
-// parameter is always returned by B2C in the POST body (OIDC spec), so we
-// can use it as a lookup key without needing any cookies.
+// Avoids SameSite cookie issues: B2C uses response_mode=form_post (cross-site POST)
+// which strips SameSite=Lax cookies. State is always in the POST body per OIDC spec.
 // ---------------------------------------------------------------------------
 const pkceStore = new Map()
 
@@ -27,155 +22,132 @@ function retrievePkce (state) {
   return entry
 }
 
-/**
- * GET /login
- * Generates PKCE verifier + challenge, stores in server-side Map,
- * then redirects to DEFRA ID (B2C) /authorize endpoint.
- */
-router.get('/login', async (_req, res, next) => {
-  try {
-    const client = await getOidcClient()
+async function buildAuthUrl (extraParams = {}) {
+  const client = await getOidcClient()
+  const code_verifier = generators.codeVerifier()
+  const code_challenge = generators.codeChallenge(code_verifier)
+  const state = generators.state()
+  const nonce = generators.nonce()
 
-    const code_verifier = generators.codeVerifier()
-    const code_challenge = generators.codeChallenge(code_verifier) // S256 by default
-    const state = generators.state()
-    const nonce = generators.nonce()
+  storePkce(state, { code_verifier, nonce })
 
-    storePkce(state, { code_verifier, nonce })
-
-    const extraParams = {
-      serviceId: config.oidc.serviceId,
-      response_mode: 'form_post'
-    }
-    if (config.oidc.aal) extraParams.aal = config.oidc.aal
-    if (config.oidc.forceMFA) extraParams.forceMFA = config.oidc.forceMFA
-    if (config.oidc.forceReselection) extraParams.forceReselection = config.oidc.forceReselection
-    if (config.oidc.relationshipId) extraParams.relationshipId = config.oidc.relationshipId
-
-    const authUrl = client.authorizationUrl({
-      scope: config.oidc.scope,
-      code_challenge,
-      code_challenge_method: 'S256',
-      state,
-      nonce,
-      ...extraParams
-    })
-
-    res.redirect(authUrl)
-  } catch (err) {
-    next(err)
-  }
-})
-
-/**
- * GET /login/switch-org
- * Re-initiates the OIDC flow with forceReselection=true, prompting the user
- * to pick a different organisation from their DEFRA ID account.
- */
-router.get('/login/switch-org', async (_req, res, next) => {
-  try {
-    const client = await getOidcClient()
-
-    const code_verifier = generators.codeVerifier()
-    const code_challenge = generators.codeChallenge(code_verifier)
-    const state = generators.state()
-    const nonce = generators.nonce()
-
-    storePkce(state, { code_verifier, nonce })
-
-    const authUrl = client.authorizationUrl({
-      scope: config.oidc.scope,
-      code_challenge,
-      code_challenge_method: 'S256',
-      state,
-      nonce,
-      serviceId: config.oidc.serviceId,
-      response_mode: 'form_post',
-      forceReselection: 'true'
-    })
-
-    res.redirect(authUrl)
-  } catch (err) {
-    next(err)
-  }
-})
-
-/**
- * POST /login/return
- * B2C posts back the authorization code via form_post.
- * State is returned in the POST body — use it to retrieve the PKCE verifier.
- */
-router.post('/login/return', async (req, res, next) => {
-  try {
-    const client = await getOidcClient()
-
-    // openid-client reads req.body when req.method === 'POST' (form_post mode)
-    const params = client.callbackParams(req)
-
-    // If B2C returned an OIDC error, log it and show a generic error page
-    if (params.error) {
-      console.error('[auth/callback] OIDC error:', params.error, params.error_description)
-      return res.render('errors/auth-error.njk')
-    }
-
-    // Retrieve and consume the PKCE entry using the state from the POST body
-    const pkce = retrievePkce(params.state)
-    if (!pkce) {
-      console.warn('[auth/callback] PKCE entry not found for state — expired or replayed')
-      return res.status(400).render('errors/auth-error.njk')
-    }
-
-    const tokenSet = await client.callback(
-      config.oidc.redirectUri,
-      params,
-      {
-        code_verifier: pkce.code_verifier,
-        state: params.state,
-        nonce: pkce.nonce
-      }
-    )
-
-    // Store raw tokens server-side in session (never sent to browser)
-    req.session.tokens = {
-      id_token: tokenSet.id_token,
-      access_token: tokenSet.access_token,
-      refresh_token: tokenSet.refresh_token,
-      expires_at: tokenSet.expires_at
-    }
-
-    // Parse and store structured user claims
-    req.session.user = parseTokenClaims(tokenSet)
-
-    const returnTo = req.session.returnTo || '/dashboard'
-    delete req.session.returnTo
-
-    req.session.save((err) => {
-      if (err) return next(err)
-      res.redirect(returnTo)
-    })
-  } catch (err) {
-    console.error('[auth/callback] Token exchange failed:', err.message)
-    res.render('errors/auth-error.njk')
-  }
-})
-
-/**
- * GET /logout
- * Destroys the local session and redirects to the signed-out confirmation page.
- */
-router.get('/logout', (req, res) => {
-  req.session.destroy((err) => {
-    if (err) console.error('[auth/logout] Session destroy error:', err.message)
-    res.redirect('/signed-out')
+  const authUrl = client.authorizationUrl({
+    scope: config.oidc.scope,
+    code_challenge,
+    code_challenge_method: 'S256',
+    state,
+    nonce,
+    serviceId: config.oidc.serviceId,
+    response_mode: 'form_post',
+    ...extraParams
   })
-})
 
-/**
- * GET /signed-out
- * Post sign-out confirmation page (public).
- */
-router.get('/signed-out', (_req, res) => {
-  res.render('signed-out.njk')
-})
+  return authUrl
+}
 
-module.exports = router
+module.exports = [
+  /**
+   * GET /login
+   * Generates PKCE verifier + challenge, stores in server-side Map,
+   * then redirects to DEFRA ID (B2C) /authorize endpoint.
+   */
+  {
+    method: 'GET',
+    path: '/login',
+    handler: async (_request, h) => {
+      const extra = {}
+      if (config.oidc.aal) extra.aal = config.oidc.aal
+      if (config.oidc.forceMFA) extra.forceMFA = config.oidc.forceMFA
+      if (config.oidc.forceReselection) extra.forceReselection = config.oidc.forceReselection
+      if (config.oidc.relationshipId) extra.relationshipId = config.oidc.relationshipId
+      return h.redirect(await buildAuthUrl(extra))
+    }
+  },
+
+  /**
+   * GET /login/switch-org
+   * Re-initiates the OIDC flow with forceReselection=true.
+   */
+  {
+    method: 'GET',
+    path: '/login/switch-org',
+    handler: async (_request, h) => {
+      return h.redirect(await buildAuthUrl({ forceReselection: 'true' }))
+    }
+  },
+
+  /**
+   * POST /login/return
+   * B2C posts back the authorization code via form_post.
+   * request.payload contains the form fields including state and code.
+   */
+  {
+    method: 'POST',
+    path: '/login/return',
+    options: {
+      payload: { parse: true, allow: 'application/x-www-form-urlencoded' }
+    },
+    handler: async (request, h) => {
+      try {
+        const client = await getOidcClient()
+        const params = request.payload || {}
+
+        if (params.error) {
+          console.error('[auth/callback] OIDC error:', params.error, params.error_description)
+          return h.view('errors/auth-error.njk')
+        }
+
+        const pkce = retrievePkce(params.state)
+        if (!pkce) {
+          console.warn('[auth/callback] PKCE entry not found for state — expired or replayed')
+          return h.view('errors/auth-error.njk').code(400)
+        }
+
+        const tokenSet = await client.callback(
+          config.oidc.redirectUri,
+          params,
+          { code_verifier: pkce.code_verifier, state: params.state, nonce: pkce.nonce }
+        )
+
+        request.yar.set('tokens', {
+          id_token: tokenSet.id_token,
+          access_token: tokenSet.access_token,
+          refresh_token: tokenSet.refresh_token,
+          expires_at: tokenSet.expires_at
+        })
+        request.yar.set('user', parseTokenClaims(tokenSet))
+
+        const returnTo = request.yar.get('returnTo') || '/dashboard'
+        request.yar.clear('returnTo')
+
+        return h.redirect(returnTo)
+      } catch (err) {
+        console.error('[auth/callback] Token exchange failed:', err.message)
+        return h.view('errors/auth-error.njk')
+      }
+    }
+  },
+
+  /**
+   * GET /logout
+   * Destroys the local session and redirects to the signed-out confirmation page.
+   */
+  {
+    method: 'GET',
+    path: '/logout',
+    handler: (request, h) => {
+      request.yar.reset()
+      return h.redirect('/signed-out')
+    }
+  },
+
+  /**
+   * GET /signed-out
+   * Post sign-out confirmation page (public).
+   */
+  {
+    method: 'GET',
+    path: '/signed-out',
+    handler: (_request, h) => h.view('signed-out.njk')
+  }
+]
