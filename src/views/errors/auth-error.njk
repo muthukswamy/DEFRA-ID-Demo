@@ -1,0 +1,29 @@
+{% extends "layouts/base.njk" %}
+
+{% block pageTitle %}There is a problem signing you in – {{ serviceName }}{% endblock %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <h1 class="govuk-heading-xl">There is a problem signing you in</h1>
+
+      <p class="govuk-body">We were unable to sign you in. This may be because:</p>
+      <ul class="govuk-list govuk-list--bullet">
+        <li>your session has expired</li>
+        <li>you cancelled the sign-in process</li>
+        <li>you do not have access to this service</li>
+        <li>there was a temporary problem with DEFRA ID</li>
+      </ul>
+
+      <p class="govuk-body govuk-!-margin-top-6">
+        {{ govukButton({
+          text: "Try signing in again",
+          href: "/auth/login"
+        }) }}
+      </p>
+      <p class="govuk-body">
+        or <a href="/" class="govuk-link">go to the start page</a>
+      </p>
+    </div>
+  </div>
+{% endblock %}

@@ -1,0 +1,15 @@
+{% extends "layouts/base.njk" %}
+
+{% block pageTitle %}Sorry, there is a problem with the service – {{ serviceName }}{% endblock %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <h1 class="govuk-heading-xl">Sorry, there is a problem with the service</h1>
+      <p class="govuk-body">Try again later.</p>
+      <p class="govuk-body">
+        <a href="/" class="govuk-link">Go to the start page</a>
+      </p>
+    </div>
+  </div>
+{% endblock %}

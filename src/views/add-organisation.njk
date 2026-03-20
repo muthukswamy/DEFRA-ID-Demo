@@ -1,0 +1,75 @@
+{% extends "layouts/base.njk" %}
+
+{% block pageTitle %}Enrol an organisation – {{ serviceName }}{% endblock %}
+
+{% block beforeContent %}
+  {{ govukBreadcrumbs({
+    items: [
+      { text: "Home", href: "/" },
+      { text: "Dashboard", href: "/dashboard" },
+      { text: "Enrol an organisation" }
+    ]
+  }) }}
+{% endblock %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <h1 class="govuk-heading-xl">Enrol an organisation with this service</h1>
+
+      <p class="govuk-body">
+        To use an additional organisation with this service, follow these steps in
+        DEFRA account management.
+      </p>
+
+      <ol class="govuk-list govuk-list--number govuk-!-margin-bottom-6">
+        <li>
+          <strong>Go to your accounts in DEFRA account management.</strong>
+          <br>
+          <a href="{{ defraAccountUrl }}" class="govuk-link" target="_blank" rel="noopener noreferrer">
+            Open DEFRA account management <span class="govuk-visually-hidden">(opens in new tab)</span>
+          </a>
+          <br>
+          You will see a table headed <strong>"Your accounts"</strong> listing your
+          organisations and their enrolled services.
+        </li>
+        <li class="govuk-!-margin-top-4">
+          <strong>Find the organisation and click the link in its row.</strong>
+          <br>
+          <ul class="govuk-list govuk-list--bullet govuk-!-margin-top-2">
+            <li>
+              <strong>For organisations</strong> — click <strong>"Manage"</strong>. On the
+              organisation page, click the <strong>"Register for more services"</strong> button.
+            </li>
+            <li>
+              <strong>For a personal account</strong> — click <strong>"Add a service"</strong>
+              directly.
+            </li>
+          </ul>
+        </li>
+        <li class="govuk-!-margin-top-4">
+          <strong>Find <em>{{ serviceName }}</em> in the list and click its link.</strong>
+          <br>
+          You will see a <strong>"Register for more services"</strong> page with a
+          list of available services. Click <strong>{{ serviceName }}</strong> to
+          begin enrolment.
+        </li>
+        <li class="govuk-!-margin-top-4">
+          <strong>Complete the enrolment, then sign in below.</strong>
+          <br>
+          Once enrolled, the organisation will appear in the org picker and on
+          your dashboard.
+        </li>
+      </ol>
+
+      {{ govukButton({
+        text: "I've enrolled my organisation — sign in",
+        href: "/login"
+      }) }}
+
+      <p class="govuk-body">
+        <a href="/dashboard" class="govuk-link">Cancel and return to dashboard</a>
+      </p>
+    </div>
+  </div>
+{% endblock %}

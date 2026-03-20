@@ -1,0 +1,12 @@
+/*
+ * Application-specific styles
+ * Loaded after govuk-frontend — use sparingly.
+ * GOV.UK Frontend provides all core styles; only add overrides here.
+ */
+
+/* Code/monospace values in summary lists */
+code {
+  font-family: "Courier New", Courier, monospace;
+  font-size: 0.875em;
+  word-break: break-all;
+}

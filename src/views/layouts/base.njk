@@ -1,0 +1,82 @@
+{% from "govuk/components/header/macro.njk" import govukHeader %}
+{% from "govuk/components/footer/macro.njk" import govukFooter %}
+{% from "govuk/components/phase-banner/macro.njk" import govukPhaseBanner %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+{% from "govuk/components/summary-list/macro.njk" import govukSummaryList %}
+{% from "govuk/components/table/macro.njk" import govukTable %}
+{% from "govuk/components/tag/macro.njk" import govukTag %}
+{% from "govuk/components/breadcrumbs/macro.njk" import govukBreadcrumbs %}
+{% from "govuk/components/notification-banner/macro.njk" import govukNotificationBanner %}
+{% from "govuk/components/inset-text/macro.njk" import govukInsetText %}
+
+<!DOCTYPE html>
+<html lang="en" class="govuk-template">
+  <head>
+    <meta charset="utf-8">
+    <title>{% block pageTitle %}{{ serviceName }}{% endblock %}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#0b0c0c">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <link rel="shortcut icon" href="/assets/images/favicon.ico" type="image/x-icon">
+    <link rel="mask-icon" href="/assets/images/govuk-mask-icon.svg" color="#0b0c0c">
+    <link rel="apple-touch-icon" href="/assets/images/govuk-apple-touch-icon.png">
+    <link rel="stylesheet" href="/govuk/govuk-frontend.min.css">
+    <link rel="stylesheet" href="/public/stylesheets/application.css">
+    {% block headExtra %}{% endblock %}
+  </head>
+
+  <body class="govuk-template__body">
+    <script>document.body.className += ' js-enabled' + ('noModule' in HTMLScriptElement.prototype ? ' govuk-frontend-supported' : '');</script>
+
+    <a href="#main-content" class="govuk-skip-link" data-module="govuk-skip-link">Skip to main content</a>
+
+    {{ govukHeader({
+      homepageUrl: "https://www.gov.uk/",
+      serviceName: serviceName,
+      serviceUrl: serviceUrl,
+      navigation: ([
+        {
+          href: "/dashboard",
+          text: "Dashboard",
+          active: activePage == "dashboard"
+        },
+        {
+          html: "<a href='" + defraAccountUrl + "' target='_blank' rel='noopener noreferrer' class='govuk-header__link'>Manage account <span class='govuk-visually-hidden'>(opens in new tab)</span></a>"
+        },
+        {
+          href: "/logout",
+          text: "Sign out"
+        }
+      ] if isAuthenticated else [])
+    }) }}
+
+    <div class="govuk-width-container">
+      {{ govukPhaseBanner({
+        tag: { text: phaseBannerTag },
+        html: phaseBannerHtml
+      }) }}
+
+      {% block beforeContent %}{% endblock %}
+
+      <main class="govuk-main-wrapper" id="main-content" role="main">
+        {% block content %}{% endblock %}
+      </main>
+    </div>
+
+    {{ govukFooter({
+      meta: {
+        items: [
+          { href: "/", text: "Home" },
+          { href: defraAccountUrl, text: "Manage DEFRA account", attributes: { target: "_blank", rel: "noopener noreferrer" } }
+        ]
+      }
+    }) }}
+
+    <script type="module" src="/govuk/govuk-frontend.min.js"></script>
+    <script type="module">
+      import { initAll } from '/govuk/govuk-frontend.min.js'
+      initAll()
+    </script>
+    {% block bodyEnd %}{% endblock %}
+  </body>
+</html>
