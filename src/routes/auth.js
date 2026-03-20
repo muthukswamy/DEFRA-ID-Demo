@@ -204,7 +204,7 @@ module.exports = [
           const client = await getOidcClient()
           const tokens = request.yar.get('tokens') || {}
           if (!tokens.refresh_token) {
-            return h.redirect('/dashboard?refreshed=no-token')
+            return h.redirect('/account?refreshed=no-token')
           }
           const tokenSet = await client.refresh(tokens.refresh_token)
           request.yar.set('tokens', {
@@ -214,10 +214,10 @@ module.exports = [
             expires_at: tokenSet.expires_at
           })
           request.yar.set('user', enrichUserFromStore(parseTokenClaims(tokenSet)))
-          return h.redirect('/dashboard?refreshed=1')
+          return h.redirect('/account?refreshed=1')
         } catch (err) {
           console.error('[auth/refresh] Manual refresh failed:', err.message)
-          return h.redirect('/dashboard?refreshed=error')
+          return h.redirect('/account?refreshed=error')
         }
       }
     }

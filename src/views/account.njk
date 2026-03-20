@@ -1,0 +1,311 @@
+{% extends "layouts/base.njk" %}
+
+{% block pageTitle %}Manage account – {{ serviceName }}{% endblock %}
+
+
+{% block content %}
+  {% if refreshed == "1" %}
+    {{ govukNotificationBanner({
+      type: "success",
+      titleText: "Token refreshed",
+      text: "Your access token has been refreshed successfully."
+    }) }}
+  {% elif refreshed == "error" %}
+    {{ govukNotificationBanner({
+      type: "important",
+      titleText: "Refresh failed",
+      text: "Could not refresh your token. Try signing out and back in."
+    }) }}
+  {% elif refreshed == "no-token" %}
+    {{ govukNotificationBanner({
+      type: "important",
+      titleText: "No refresh token",
+      text: "No refresh token is available in this session."
+    }) }}
+  {% endif %}
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-full">
+      <h1 class="govuk-heading-xl">Manage account</h1>
+    </div>
+  </div>
+
+  {# ── Personal details ─────────────────────────────────────────────────── #}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <h2 class="govuk-heading-l">Personal details</h2>
+      {{ govukSummaryList({
+        rows: [
+          {
+            key: { text: "Name" },
+            value: { text: user.displayName or "—" }
+          },
+          {
+            key: { text: "Email" },
+            value: { text: user.email or "—" }
+          }
+        ]
+      }) }}
+    </div>
+  </div>
+
+  {# ── Accounts ──────────────────────────────────────────────────────────── #}
+  <div class="govuk-grid-row govuk-!-margin-top-2">
+    <div class="govuk-grid-column-two-thirds">
+      <h2 class="govuk-heading-l">Accounts</h2>
+
+      {% if user.enrolmentRequestCount > 0 %}
+        {{ govukInsetText({
+          text: "You have " + user.enrolmentRequestCount + " pending enrolment request(s). Once approved, those accounts will appear in the account picker."
+        }) }}
+      {% endif %}
+    </div>
+  </div>
+
+  {% if user.relationships and user.relationships.length > 0 %}
+    <div class="govuk-grid-row">
+      <div class="govuk-grid-column-full">
+        {% if user.relationshipsFromStore %}
+          <p class="govuk-body govuk-!-font-size-16">
+            Some accounts below were seen in a previous sign-in and may not be in your
+            current token. Switch account or refresh the token to update.
+          </p>
+        {% endif %}
+        {{ govukTable({
+          head: [
+            { text: "Account name" },
+            { text: "Relationship" }
+          ],
+          rows: simpleRelationshipRows
+        }) }}
+      </div>
+    </div>
+  {% else %}
+    <div class="govuk-grid-row">
+      <div class="govuk-grid-column-two-thirds">
+        {{ govukInsetText({
+          text: "No accounts are linked to your profile for this service."
+        }) }}
+      </div>
+    </div>
+  {% endif %}
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      {% if user.enrolmentCount > 1 %}
+        {{ govukButton({
+          text: "Switch enrolled account",
+          href: "/login/switch-org",
+          classes: "govuk-button--secondary govuk-!-margin-right-2 govuk-!-margin-bottom-2"
+        }) }}
+      {% endif %}
+      {{ govukButton({
+        text: "Enrol an account",
+        href: "/add-organisation",
+        classes: "govuk-button--secondary govuk-!-margin-bottom-2"
+      }) }}
+
+      <p class="govuk-body govuk-!-font-size-16 govuk-!-margin-top-2">
+        <a href="{{ defraAccountUrl }}" class="govuk-link" target="_blank" rel="noopener noreferrer">
+          Manage your DEFRA account <span class="govuk-visually-hidden">(opens in new tab)</span>
+        </a>
+      </p>
+    </div>
+  </div>
+
+  {# ── Technical details (collapsible) ──────────────────────────────────── #}
+  <div class="govuk-grid-row govuk-!-margin-top-6">
+    <div class="govuk-grid-column-full">
+      <details class="govuk-details">
+        <summary class="govuk-details__summary">
+          <span class="govuk-details__summary-text">Technical details</span>
+        </summary>
+        <div class="govuk-details__text">
+
+          <h3 class="govuk-heading-s">Identity</h3>
+          {{ govukSummaryList({
+            rows: [
+              {
+                key: { text: "Unique reference" },
+                value: { html: "<code>" + (user.uniqueReference or "—") + "</code>" }
+              },
+              {
+                key: { text: "Contact ID" },
+                value: { html: "<code class='govuk-!-font-size-16'>" + (user.contactId or "—") + "</code>" }
+              },
+              {
+                key: { text: "Subject (sub)" },
+                value: { html: "<code class='govuk-!-font-size-16'>" + (user.sub or "—") + "</code>" }
+              }
+            ]
+          }) }}
+
+          <h3 class="govuk-heading-s govuk-!-margin-top-4">Authentication</h3>
+          {{ govukSummaryList({
+            rows: [
+              {
+                key: { text: "Authentication assurance level (AAL)" },
+                value: {
+                  html: govukTag({ text: "AAL " + (user.aal or "—"), classes: "govuk-tag--blue" })
+                }
+              },
+              {
+                key: { text: "Level of assurance (LOA)" },
+                value: { text: user.loa if user.loa is not none else "—" }
+              },
+              {
+                key: { text: "Authentication method (AMR)" },
+                value: { text: user.amr | join(", ") if user.amr.length else "—" }
+              },
+              {
+                key: { text: "Session ID" },
+                value: { html: "<code class='govuk-!-font-size-16'>" + (user.sessionId or "—") + "</code>" }
+              },
+              {
+                key: { text: "Correlation ID" },
+                value: { html: "<code class='govuk-!-font-size-16'>" + (user.correlationId or "—") + "</code>" }
+              },
+              {
+                key: { text: "Service ID" },
+                value: { html: "<code class='govuk-!-font-size-16'>" + (user.serviceId or "—") + "</code>" }
+              },
+              {
+                key: { text: "Access token expires" },
+                value: {
+                  html: "<span class='app-token-expiry' data-expires='" + (tokenExpiresAt or "") + "'>—</span>"
+                }
+              }
+            ]
+          }) }}
+
+          <div class="govuk-!-margin-top-4">
+            {% if hasRefreshToken %}
+              <form method="POST" action="/refresh">
+                {{ govukButton({
+                  text: "Refresh token now",
+                  classes: "govuk-button--secondary govuk-!-margin-bottom-0"
+                }) }}
+              </form>
+            {% else %}
+              <p class="govuk-body govuk-!-font-size-16">
+                No refresh token — token cannot be refreshed manually.
+              </p>
+            {% endif %}
+          </div>
+
+          {% if currentOrg %}
+            <h3 class="govuk-heading-s govuk-!-margin-top-6">Current account (full)</h3>
+            {{ govukSummaryList({
+              rows: [
+                {
+                  key: { text: "Account ID" },
+                  value: { html: "<code class='govuk-!-font-size-16'>" + currentOrg.organisationId + "</code>" }
+                },
+                {
+                  key: { text: "Account LOA" },
+                  value: { text: currentOrg.organisationLoa }
+                },
+                {
+                  key: { text: "Relationship LOA" },
+                  value: { text: currentOrg.relationshipLoa }
+                }
+              ]
+            }) }}
+          {% endif %}
+
+          <h3 class="govuk-heading-s govuk-!-margin-top-6">Enrolments</h3>
+          {{ govukSummaryList({
+            rows: [
+              {
+                key: { text: "Enrolled with this service" },
+                value: { text: user.enrolmentCount }
+              },
+              {
+                key: { text: "Pending requests" },
+                value: { text: user.enrolmentRequestCount }
+              }
+            ]
+          }) }}
+
+          {% if user.relationships and user.relationships.length > 0 %}
+            <h3 class="govuk-heading-s govuk-!-margin-top-6">Linked accounts (full)</h3>
+            {{ govukTable({
+              head: [
+                { text: "Account name" },
+                { text: "Account ID" },
+                { text: "Relationship" },
+                { text: "LOA" }
+              ],
+              rows: relationshipRows
+            }) }}
+          {% endif %}
+
+          {% if user.roles and user.roles.length > 0 %}
+            <h3 class="govuk-heading-s govuk-!-margin-top-6">Roles</h3>
+            {{ govukTable({
+              head: [
+                { text: "Role name" },
+                { text: "Status" },
+                { text: "Organisation" }
+              ],
+              rows: roleRows
+            }) }}
+          {% endif %}
+
+          <h3 class="govuk-heading-s govuk-!-margin-top-6">Raw token claims (JSON)</h3>
+          <pre class="app-raw-claims">{{ rawClaims }}</pre>
+
+        </div>
+      </details>
+    </div>
+  </div>
+
+{% endblock %}
+
+{% block bodyEnd %}
+  <script>
+    // ── Token expiry display ──────────────────────────────────────────────
+    const expiryEl = document.querySelector('.app-token-expiry')
+    if (expiryEl) {
+      const exp = parseInt(expiryEl.dataset.expires, 10)
+      if (exp) {
+        const update = () => {
+          const now = Math.floor(Date.now() / 1000)
+          const diff = exp - now
+          const date = new Date(exp * 1000)
+          const time = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+          if (diff > 0) {
+            const m = Math.floor(diff / 60)
+            const s = diff % 60
+            expiryEl.textContent = time + ' (in ' + (m > 0 ? m + ' min ' : '') + s + ' sec)'
+          } else {
+            expiryEl.textContent = time + ' (expired)'
+          }
+        }
+        update()
+        setInterval(update, 1000)
+      }
+    }
+
+    // ── Copy-to-clipboard ─────────────────────────────────────────────────
+    document.querySelectorAll('code').forEach(function (el) {
+      const text = el.textContent.trim()
+      if (!text || text === '—') return
+      const btn = document.createElement('button')
+      btn.className = 'app-copy-btn'
+      btn.type = 'button'
+      btn.textContent = 'Copy'
+      btn.setAttribute('aria-label', 'Copy value')
+      btn.dataset.copy = text
+      el.insertAdjacentElement('afterend', btn)
+    })
+
+    document.addEventListener('click', function (e) {
+      if (!e.target.matches('.app-copy-btn')) return
+      navigator.clipboard.writeText(e.target.dataset.copy).then(function () {
+        e.target.textContent = 'Copied!'
+        setTimeout(function () { e.target.textContent = 'Copy' }, 2000)
+      })
+    })
+  </script>
+{% endblock %}
