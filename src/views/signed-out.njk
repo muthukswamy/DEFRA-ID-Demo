@@ -26,15 +26,15 @@
         href: "/login"
       }) }}
 
-      {% if idToken and endSessionUrl %}
-        <hr class="govuk-section-break govuk-section-break--m govuk-section-break--visible">
+      <hr class="govuk-section-break govuk-section-break--m govuk-section-break--visible">
 
-        <h2 class="govuk-heading-m govuk-!-margin-top-4">Also sign out of DEFRA ID?</h2>
+      <h2 class="govuk-heading-m govuk-!-margin-top-4">Also sign out of DEFRA ID?</h2>
+
+      {% if idToken and endSessionUrl %}
         <p class="govuk-body">
           Your DEFRA ID account session may still be active in this browser. If you
           are on a shared or public device, sign out of DEFRA ID completely.
         </p>
-
         <form method="POST" action="{{ endSessionUrl }}" target="_blank" rel="noopener noreferrer">
           <input type="hidden" name="id_token_hint" value="{{ idToken }}">
           <input type="hidden" name="post_logout_redirect_uri" value="{{ postLogoutRedirectUri }}">
@@ -43,6 +43,12 @@
             classes: "govuk-button--secondary"
           }) }}
         </form>
+      {% else %}
+        <p class="govuk-body">
+          The option to sign out of DEFRA ID directly is not available in this session.
+          To sign out fully, <a href="{{ defraAccountUrl }}" class="govuk-link" target="_blank" rel="noopener noreferrer">visit DEFRA account management</a>
+          or close your browser window.
+        </p>
       {% endif %}
     </div>
   </div>

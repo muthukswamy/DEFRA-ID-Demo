@@ -1,6 +1,7 @@
 'use strict'
 
 const { requireAuth } = require('../middleware/auth')
+const { config } = require('../config')
 
 module.exports = [
   {
@@ -69,7 +70,11 @@ module.exports = [
           rawClaims: JSON.stringify(user, null, 2),
           tokenExpiresAt: tokens.expires_at || null,
           hasRefreshToken: !!tokens.refresh_token,
-          refreshed: request.query.refreshed || null
+          refreshed: request.query.refreshed || null,
+          sessionMaxAge: (() => {
+            const h = config.session.maxAge / 3600000
+            return h === 1 ? '1 hour' : h % 1 === 0 ? h + ' hours' : (config.session.maxAge / 60000) + ' minutes'
+          })()
         })
       }
     }

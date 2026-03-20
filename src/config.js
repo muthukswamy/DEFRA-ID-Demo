@@ -81,4 +81,14 @@ async function getOidcClient () {
   return _oidcClientPromise
 }
 
+// ---------------------------------------------------------------------------
+// Startup validation
+// ---------------------------------------------------------------------------
+if (!config.oidc.clientSecret) {
+  throw new Error('DEFRA_ID_CLIENT_SECRET is not set')
+}
+if (config.isProduction && config.session.secret === 'dev-session-secret-change-in-production') {
+  throw new Error('SESSION_SECRET must be changed from the default value in production')
+}
+
 module.exports = { config, getOidcClient }

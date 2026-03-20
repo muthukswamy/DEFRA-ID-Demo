@@ -37,6 +37,33 @@ code {
   color: #fff;
 }
 
+/* Sign out nav button — styled to match service nav links */
+.app-logout-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  color: currentColor;
+  font: inherit;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 0.1em;
+}
+
+.app-logout-btn:hover {
+  text-decoration-thickness: 3px;
+}
+
+/* Inline button inside notification banner (e.g. "Refresh now") */
+.app-inline-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 0.1em;
+}
+
 /* Raw claims pre block */
 .app-raw-claims {
   font-family: "Courier New", Courier, monospace;

@@ -3,6 +3,12 @@
 {% block pageTitle %}Dashboard – {{ serviceName }}{% endblock %}
 
 {% block content %}
+  {% if user.enrolmentRequestCount > 0 %}
+    {{ govukNotificationBanner({
+      html: "You have <strong>" + user.enrolmentRequestCount + "</strong> pending enrolment request(s). <a href='/account' class='govuk-notification-banner__link'>View in Manage account</a>"
+    }) }}
+  {% endif %}
+
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
 

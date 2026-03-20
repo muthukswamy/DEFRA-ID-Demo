@@ -50,8 +50,7 @@
           active: activePage == "account"
         },
         {
-          href: "/logout",
-          text: "Sign out"
+          html: "<form method='POST' action='/logout' style='margin:0'><button type='submit' class='app-logout-btn'>Sign out</button></form>"
         }
       ] if isAuthenticated else undefined)
     }) }}
@@ -63,11 +62,19 @@
       }) }}
 
       {% if sessionExpiringSoon %}
-        {{ govukNotificationBanner({
-          type: "important",
-          titleText: "Your session is about to expire",
-          text: "You will be signed out soon. Sign in again to continue."
-        }) }}
+        {% if hasRefreshToken %}
+          {{ govukNotificationBanner({
+            type: "important",
+            titleText: "Your session is about to expire",
+            html: "Your access token expires soon. <form method='POST' action='/refresh' style='display:inline'><input type='hidden' name='returnTo' value='" + currentPath + "'><button type='submit' class='govuk-notification-banner__link app-inline-btn'>Refresh now</button></form> to stay signed in."
+          }) }}
+        {% else %}
+          {{ govukNotificationBanner({
+            type: "important",
+            titleText: "Your session is about to expire",
+            html: "You will be signed out soon. <a href='/login' class='govuk-notification-banner__link'>Sign in again</a> to continue."
+          }) }}
+        {% endif %}
       {% endif %}
 
       {% block beforeContent %}{% endblock %}

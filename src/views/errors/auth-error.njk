@@ -7,13 +7,21 @@
     <div class="govuk-grid-column-two-thirds">
       <h1 class="govuk-heading-xl">There is a problem signing you in</h1>
 
-      <p class="govuk-body">We were unable to sign you in. This may be because:</p>
-      <ul class="govuk-list govuk-list--bullet">
-        <li>your session has expired</li>
-        <li>you cancelled the sign-in process</li>
-        <li>you do not have access to this service</li>
-        <li>there was a temporary problem with DEFRA ID</li>
-      </ul>
+      {% if errorCode == "access_denied" %}
+        <p class="govuk-body">You cancelled the sign-in process. Try again when you are ready.</p>
+      {% elif errorCode == "login_required" %}
+        <p class="govuk-body">Your session has expired. Please sign in again to continue.</p>
+      {% elif errorCode == "interaction_required" %}
+        <p class="govuk-body">Further action is needed to complete sign-in. Please try again.</p>
+      {% else %}
+        <p class="govuk-body">We were unable to sign you in. This may be because:</p>
+        <ul class="govuk-list govuk-list--bullet">
+          <li>your session has expired</li>
+          <li>you cancelled the sign-in process</li>
+          <li>you do not have access to this service</li>
+          <li>there was a temporary problem with DEFRA ID</li>
+        </ul>
+      {% endif %}
 
       {% if errorCode %}
         {{ govukInsetText({

@@ -153,12 +153,13 @@ module.exports = [
   },
 
   /**
-   * GET /logout
+   * POST /logout
    * Destroys the local session and renders the signed-out page directly,
    * passing the id_token so the page can offer a "sign out of DEFRA ID" option.
+   * POST prevents CSRF — a third-party link cannot trigger sign-out.
    */
   {
-    method: 'GET',
+    method: 'POST',
     path: '/logout',
     handler: async (request, h) => {
       const tokens = request.yar.get('tokens') || {}
@@ -203,8 +204,9 @@ module.exports = [
         try {
           const client = await getOidcClient()
           const tokens = request.yar.get('tokens') || {}
+          const returnTo = (request.payload && request.payload.returnTo) || '/account'
           if (!tokens.refresh_token) {
-            return h.redirect('/account?refreshed=no-token')
+            return h.redirect(returnTo + (returnTo.includes('?') ? '&' : '?') + 'refreshed=no-token')
           }
           const tokenSet = await client.refresh(tokens.refresh_token)
           request.yar.set('tokens', {
@@ -214,10 +216,11 @@ module.exports = [
             expires_at: tokenSet.expires_at
           })
           request.yar.set('user', enrichUserFromStore(parseTokenClaims(tokenSet)))
-          return h.redirect('/account?refreshed=1')
+          return h.redirect(returnTo + (returnTo.includes('?') ? '&' : '?') + 'refreshed=1')
         } catch (err) {
           console.error('[auth/refresh] Manual refresh failed:', err.message)
-          return h.redirect('/account?refreshed=error')
+          const returnTo = (request.payload && request.payload.returnTo) || '/account'
+          return h.redirect(returnTo + (returnTo.includes('?') ? '&' : '?') + 'refreshed=error')
         }
       }
     }

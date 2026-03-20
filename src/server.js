@@ -124,14 +124,39 @@ const init = async () => {
       const tokens = request.yar.get('tokens')
       const isAuthenticated = !!tokens
       let sessionExpiringSoon = false
-      if (isAuthenticated && tokens.expires_at && !tokens.refresh_token) {
+      if (isAuthenticated && tokens.expires_at) {
         const secsRemaining = tokens.expires_at - Math.floor(Date.now() / 1000)
         sessionExpiringSoon = secsRemaining > 0 && secsRemaining < 600 // within 10 min
       }
       response.source.context = Object.assign(
-        { isAuthenticated, user: request.yar.get('user'), sessionExpiringSoon },
+        {
+          isAuthenticated,
+          user: request.yar.get('user'),
+          sessionExpiringSoon,
+          hasRefreshToken: !!(tokens && tokens.refresh_token),
+          currentPath: request.path
+        },
         response.source.context
       )
+    }
+
+    // Content Security Policy
+    const b2cOrigin = (() => {
+      try { return new URL(config.oidc.discoveryUrl).origin } catch (_) { return '' }
+    })()
+    const csp = [
+      "default-src 'self'",
+      "script-src 'self' 'unsafe-inline'",
+      "style-src 'self' 'unsafe-inline'",
+      "img-src 'self' data:",
+      "font-src 'self'",
+      `form-action 'self'${b2cOrigin ? ' ' + b2cOrigin : ''}`,
+      "frame-ancestors 'none'"
+    ].join('; ')
+    if (response.output) {
+      response.output.headers['content-security-policy'] = csp
+    } else if (response.header) {
+      response.header('content-security-policy', csp)
     }
 
     return h.continue
