@@ -1,6 +1,7 @@
 'use strict'
 
 const { getOidcClient } = require('../config')
+const relStore = require('../store/relationships')
 
 /**
  * Decode a JWT payload without verification (claims already validated by openid-client).
@@ -77,6 +78,23 @@ const AMR_LABELS = {
 }
 
 /**
+ * Merge token relationships/roles into the SQLite store, then return a user object
+ * enriched with the full accumulated set (all orgs seen across sign-ins, not just
+ * the current token's scope). Sets `relationshipsFromStore: true` when the stored
+ * set is larger than what the current token delivered.
+ */
+function enrichUserFromStore (user) {
+  relStore.merge(user)
+  const stored = relStore.get(user.sub)
+  return {
+    ...user,
+    relationships: stored.relationships,
+    roles: stored.roles,
+    relationshipsFromStore: stored.relationships.length > user.relationships.length
+  }
+}
+
+/**
  * Extract and structure all claims from the tokenSet.
  * openid-client's tokenSet.claims() returns verified id_token claims.
  */
@@ -142,7 +160,7 @@ async function requireAuth (request, h) {
         refresh_token: refreshed.refresh_token || refresh_token,
         expires_at: refreshed.expires_at
       })
-      request.yar.set('user', parseTokenClaims(refreshed))
+      request.yar.set('user', enrichUserFromStore(parseTokenClaims(refreshed)))
     } catch (err) {
       console.error('[auth] Token refresh failed:', err.message)
       request.yar.reset()
@@ -153,4 +171,4 @@ async function requireAuth (request, h) {
   return h.continue
 }
 
-module.exports = { requireAuth, parseTokenClaims, parseRelationships, parseRoles }
+module.exports = { requireAuth, parseTokenClaims, enrichUserFromStore, parseRelationships, parseRoles }

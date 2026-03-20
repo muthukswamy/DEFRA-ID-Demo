@@ -10,6 +10,7 @@ module.exports = [
       pre: [{ method: requireAuth }],
       handler: (request, h) => {
         const user = request.yar.get('user')
+        const tokens = request.yar.get('tokens') || {}
 
         const currentOrg = user.currentRelationshipId && user.relationships
           ? user.relationships.find((r) => r.relationshipId === user.currentRelationshipId) || null
@@ -33,7 +34,11 @@ module.exports = [
           user,
           currentOrg,
           relationshipRows,
-          roleRows
+          roleRows,
+          rawClaims: JSON.stringify(user, null, 2),
+          tokenExpiresAt: tokens.expires_at || null,
+          hasRefreshToken: !!tokens.refresh_token,
+          refreshed: request.query.refreshed || null
         })
       }
     }

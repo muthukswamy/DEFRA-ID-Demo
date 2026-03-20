@@ -15,10 +15,16 @@
         <li>there was a temporary problem with DEFRA ID</li>
       </ul>
 
+      {% if errorCode %}
+        {{ govukInsetText({
+          html: "<strong>" + errorCode + "</strong>" + (" — " + errorDescription if errorDescription else "")
+        }) }}
+      {% endif %}
+
       <p class="govuk-body govuk-!-margin-top-6">
         {{ govukButton({
           text: "Try signing in again",
-          href: "/auth/login"
+          href: "/login"
         }) }}
       </p>
       <p class="govuk-body">

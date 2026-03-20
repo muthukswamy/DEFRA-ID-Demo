@@ -8,6 +8,8 @@ const Vision = require('@hapi/vision')
 const Yar = require('@hapi/yar')
 const { config, getOidcClient } = require('./config')
 const { configureViews } = require('./plugins/nunjucks')
+const CatboxSqlite = require('./store/session')
+const { db: localDb } = require('./store/relationships')
 
 const init = async () => {
   const server = Hapi.server({
@@ -25,6 +27,17 @@ const init = async () => {
   })
 
   // ---------------------------------------------------------------------------
+  // Session cache — SQLite (swap provider for @hapi/catbox-redis in production)
+  // ---------------------------------------------------------------------------
+  await server.cache.provision({
+    provider: {
+      constructor: CatboxSqlite,
+      options: { db: localDb }
+    },
+    name: 'sqlite-sessions'
+  })
+
+  // ---------------------------------------------------------------------------
   // Plugins
   // ---------------------------------------------------------------------------
   await server.register([
@@ -34,12 +47,16 @@ const init = async () => {
       plugin: Yar,
       options: {
         storeBlank: false,
+        maxCookieSize: 0, // always server-side; cookie holds session ID only
+        cache: {
+          cache: 'sqlite-sessions',
+          expiresIn: config.session.maxAge
+        },
         cookieOptions: {
           password: config.session.secret,
           isSecure: config.isProduction,
           isHttpOnly: true,
-          isSameSite: 'Lax',
-          ttl: config.session.maxAge
+          isSameSite: 'Lax'
         }
       }
     }
@@ -104,8 +121,15 @@ const init = async () => {
 
     // Inject isAuthenticated + user into every view context
     if (response.variety === 'view') {
+      const tokens = request.yar.get('tokens')
+      const isAuthenticated = !!tokens
+      let sessionExpiringSoon = false
+      if (isAuthenticated && tokens.expires_at && !tokens.refresh_token) {
+        const secsRemaining = tokens.expires_at - Math.floor(Date.now() / 1000)
+        sessionExpiringSoon = secsRemaining > 0 && secsRemaining < 600 // within 10 min
+      }
       response.source.context = Object.assign(
-        { isAuthenticated: !!request.yar.get('tokens'), user: request.yar.get('user') },
+        { isAuthenticated, user: request.yar.get('user'), sessionExpiringSoon },
         response.source.context
       )
     }

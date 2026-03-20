@@ -62,6 +62,14 @@
         html: phaseBannerHtml
       }) }}
 
+      {% if sessionExpiringSoon %}
+        {{ govukNotificationBanner({
+          type: "important",
+          titleText: "Your session is about to expire",
+          text: "You will be signed out soon. Sign in again to continue."
+        }) }}
+      {% endif %}
+
       {% block beforeContent %}{% endblock %}
 
       <main class="govuk-main-wrapper" id="main-content" role="main">

@@ -21,12 +21,21 @@
         <li>test sign-out and token refresh behaviour</li>
       </ul>
 
-      {{ govukButton({
-        text: "Sign in with DEFRA ID",
-        href: "/login",
-        isStartButton: true,
-        classes: "govuk-!-margin-top-4"
-      }) }}
+      {% if isAuthenticated %}
+        {{ govukButton({
+          text: "Go to your dashboard",
+          href: "/dashboard",
+          isStartButton: true,
+          classes: "govuk-!-margin-top-4"
+        }) }}
+      {% else %}
+        {{ govukButton({
+          text: "Sign in with DEFRA ID",
+          href: "/login",
+          isStartButton: true,
+          classes: "govuk-!-margin-top-4"
+        }) }}
+      {% endif %}
 
       <h2 class="govuk-heading-m">Before you start</h2>
       <p class="govuk-body">

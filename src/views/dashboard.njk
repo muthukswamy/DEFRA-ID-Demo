@@ -4,6 +4,26 @@
 
 
 {% block content %}
+  {% if refreshed == "1" %}
+    {{ govukNotificationBanner({
+      type: "success",
+      titleText: "Token refreshed",
+      text: "Your access token has been refreshed successfully."
+    }) }}
+  {% elif refreshed == "error" %}
+    {{ govukNotificationBanner({
+      type: "important",
+      titleText: "Refresh failed",
+      text: "Could not refresh your token. Try signing out and back in."
+    }) }}
+  {% elif refreshed == "no-token" %}
+    {{ govukNotificationBanner({
+      type: "important",
+      titleText: "No refresh token",
+      text: "No refresh token is available in this session."
+    }) }}
+  {% endif %}
+
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-full">
       <h1 class="govuk-heading-xl">Your account</h1>
@@ -68,9 +88,30 @@
           {
             key: { text: "Service ID" },
             value: { html: "<code class='govuk-!-font-size-16'>" + (user.serviceId or "—") + "</code>" }
+          },
+          {
+            key: { text: "Access token expires" },
+            value: {
+              html: "<span class='app-token-expiry' data-expires='" + (tokenExpiresAt or "") + "'>—</span>"
+            }
           }
         ]
       }) }}
+
+      <div class="govuk-!-margin-top-4">
+        {% if hasRefreshToken %}
+          <form method="POST" action="/refresh">
+            {{ govukButton({
+              text: "Refresh token now",
+              classes: "govuk-button--secondary govuk-!-margin-bottom-0"
+            }) }}
+          </form>
+        {% else %}
+          <p class="govuk-body govuk-!-font-size-16 govuk-!-color-secondary">
+            No refresh token — token cannot be refreshed manually.
+          </p>
+        {% endif %}
+      </div>
     </div>
 
     <div class="govuk-grid-column-one-third">
@@ -175,6 +216,12 @@
             ({{ user.relationships.length }})
           </span>
         </h2>
+        {% if user.relationshipsFromStore %}
+          <p class="govuk-body govuk-!-font-size-16">
+            Some organisations below were seen in a previous sign-in and may not be in your
+            current token. Switch org or refresh the token to update.
+          </p>
+        {% endif %}
         {{ govukTable({
           head: [
             { text: "Organisation name" },
@@ -221,4 +268,67 @@
     </div>
   {% endif %}
 
+  {# ── Raw token claims ─────────────────────────────────────────────────── #}
+  <div class="govuk-grid-row govuk-!-margin-top-4">
+    <div class="govuk-grid-column-full">
+      <details class="govuk-details">
+        <summary class="govuk-details__summary">
+          <span class="govuk-details__summary-text">Raw token claims (JSON)</span>
+        </summary>
+        <div class="govuk-details__text">
+          <pre class="app-raw-claims">{{ rawClaims }}</pre>
+        </div>
+      </details>
+    </div>
+  </div>
+
+{% endblock %}
+
+{% block bodyEnd %}
+  <script>
+    // ── Token expiry display ──────────────────────────────────────────────
+    const expiryEl = document.querySelector('.app-token-expiry')
+    if (expiryEl) {
+      const exp = parseInt(expiryEl.dataset.expires, 10)
+      if (exp) {
+        const update = () => {
+          const now = Math.floor(Date.now() / 1000)
+          const diff = exp - now
+          const date = new Date(exp * 1000)
+          const time = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+          if (diff > 0) {
+            const m = Math.floor(diff / 60)
+            const s = diff % 60
+            expiryEl.textContent = time + ' (in ' + (m > 0 ? m + ' min ' : '') + s + ' sec)'
+          } else {
+            expiryEl.textContent = time + ' (expired)'
+          }
+        }
+        update()
+        setInterval(update, 1000)
+      }
+    }
+
+    // ── Copy-to-clipboard ─────────────────────────────────────────────────
+    // Attach a Copy button after every <code> element that has a non-trivial value.
+    document.querySelectorAll('code').forEach(function (el) {
+      const text = el.textContent.trim()
+      if (!text || text === '—') return
+      const btn = document.createElement('button')
+      btn.className = 'app-copy-btn'
+      btn.type = 'button'
+      btn.textContent = 'Copy'
+      btn.setAttribute('aria-label', 'Copy value')
+      btn.dataset.copy = text
+      el.insertAdjacentElement('afterend', btn)
+    })
+
+    document.addEventListener('click', function (e) {
+      if (!e.target.matches('.app-copy-btn')) return
+      navigator.clipboard.writeText(e.target.dataset.copy).then(function () {
+        e.target.textContent = 'Copied!'
+        setTimeout(function () { e.target.textContent = 'Copy' }, 2000)
+      })
+    })
+  </script>
 {% endblock %}
