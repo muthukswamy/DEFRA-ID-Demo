@@ -97,7 +97,8 @@ const init = async () => {
   server.route([
     ...require('./routes/index'),
     ...require('./routes/auth'),
-    ...require('./routes/dashboard')
+    ...require('./routes/dashboard'),
+    ...require('./routes/team')
   ])
 
   // ---------------------------------------------------------------------------

@@ -1,0 +1,74 @@
+{% extends "layouts/base.njk" %}
+
+{% block pageTitle %}Team access – {{ serviceName }}{% endblock %}
+
+{% block beforeContent %}
+  {{ govukBreadcrumbs({
+    items: [
+      { text: "Dashboard", href: "/dashboard" },
+      { text: "Manage account", href: "/account" },
+      { text: "Team access" }
+    ]
+  }) }}
+{% endblock %}
+
+{% block content %}
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <span class="govuk-caption-xl">{{ currentOrg.organisationName }}</span>
+      <h1 class="govuk-heading-xl">Team access</h1>
+
+      {{ govukInsetText({
+        html: "To add or remove team members, use " +
+          ("<a href='" + (orgTeamUrl or defraAccountUrl) + "' class='govuk-link' target='_blank' rel='noopener noreferrer'>employees <span class='govuk-visually-hidden'>(opens in new tab)</span></a>") +
+          " or " +
+          ("<a href='" + (orgIntermediariesUrl or defraAccountUrl) + "' class='govuk-link' target='_blank' rel='noopener noreferrer'>intermediaries <span class='govuk-visually-hidden'>(opens in new tab)</span></a>") +
+          " in DEFRA account management. Members appear here after their first sign-in to this service."
+      }) }}
+    </div>
+  </div>
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-full">
+
+      {% if memberCount > 0 %}
+        {{ govukTable({
+          head: [
+            { text: "Name" },
+            { text: "Email" },
+            { text: "Account relationship" },
+            { text: "Service role" },
+            { text: "Last seen" },
+            { text: "Manage" }
+          ],
+          rows: memberRows
+        }) }}
+      {% else %}
+        {{ govukInsetText({
+          text: "No team members have signed in to this service yet."
+        }) }}
+      {% endif %}
+
+    </div>
+  </div>
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <h2 class="govuk-heading-m govuk-!-margin-top-4">Service roles</h2>
+      {{ govukTable({
+        head: [
+          { text: "Role" },
+          { text: "Description" }
+        ],
+        rows: [
+          [{ text: "Admin" }, { text: "Can view team and all service features" }],
+          [{ text: "Editor" }, { text: "Can create and edit records" }],
+          [{ text: "Viewer" }, { text: "Read-only access" }],
+          [{ text: "Member" }, { text: "Default — basic access" }]
+        ]
+      }) }}
+    </div>
+  </div>
+
+{% endblock %}

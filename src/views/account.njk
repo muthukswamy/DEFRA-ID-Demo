@@ -104,6 +104,13 @@
         href: "/add-organisation",
         classes: "govuk-button--secondary govuk-!-margin-bottom-2"
       }) }}
+      {% if isOrgAdmin and currentOrg %}
+        {{ govukButton({
+          text: "Manage team access",
+          href: "/team",
+          classes: "govuk-button--secondary govuk-!-margin-left-2 govuk-!-margin-bottom-2"
+        }) }}
+      {% endif %}
 
       <p class="govuk-body govuk-!-font-size-16 govuk-!-margin-top-2">
         <a href="{{ defraAccountUrl }}" class="govuk-link" target="_blank" rel="noopener noreferrer">

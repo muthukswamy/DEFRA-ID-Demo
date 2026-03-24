@@ -24,8 +24,27 @@
         {% endif %}
       </p>
 
+      {% if serviceRole %}
+        <p class="govuk-body govuk-!-margin-bottom-1">
+          Your service role:
+          {% if serviceRole == "admin" %}
+            {{ govukTag({ text: "Admin", classes: "govuk-tag--green" }) }}
+          {% elif serviceRole == "editor" %}
+            {{ govukTag({ text: "Editor", classes: "govuk-tag--blue" }) }}
+          {% elif serviceRole == "viewer" %}
+            {{ govukTag({ text: "Viewer", classes: "govuk-tag--grey" }) }}
+          {% else %}
+            {{ govukTag({ text: "Member", classes: "govuk-tag--grey" }) }}
+          {% endif %}
+        </p>
+      {% endif %}
+
       <p class="govuk-body govuk-!-margin-top-6">
         <a href="/account" class="govuk-link">Manage your account</a>
+        {% if isOrgAdmin and currentOrg %}
+          &nbsp;·&nbsp;
+          <a href="/team" class="govuk-link">Manage team access</a>
+        {% endif %}
       </p>
 
     </div>

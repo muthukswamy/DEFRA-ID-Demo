@@ -2,6 +2,7 @@
 
 const { requireAuth } = require('../middleware/auth')
 const { config } = require('../config')
+const { getServiceRole, isOrgAdmin } = require('../store/relationships')
 
 module.exports = [
   {
@@ -14,7 +15,11 @@ module.exports = [
         const currentOrg = user.currentRelationshipId && user.relationships
           ? user.relationships.find((r) => r.relationshipId === user.currentRelationshipId) || null
           : null
-        return h.view('dashboard.njk', { activePage: 'dashboard', user, currentOrg })
+        const orgAdmin = isOrgAdmin(user)
+        const serviceRole = currentOrg
+          ? getServiceRole(currentOrg.organisationId, user.sub)
+          : null
+        return h.view('dashboard.njk', { activePage: 'dashboard', user, currentOrg, isOrgAdmin: orgAdmin, serviceRole })
       }
     }
   },
@@ -60,10 +65,17 @@ module.exports = [
           { text: relMap[r.relationshipId] || r.relationshipId }
         ])
 
+        const orgAdmin = isOrgAdmin(user)
+        const serviceRole = currentOrg
+          ? getServiceRole(currentOrg.organisationId, user.sub)
+          : null
+
         return h.view('account.njk', {
           activePage: 'account',
           user,
           currentOrg,
+          isOrgAdmin: orgAdmin,
+          serviceRole,
           relationshipRows,
           simpleRelationshipRows,
           roleRows,

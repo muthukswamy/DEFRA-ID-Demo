@@ -60,16 +60,6 @@ function parseRoles (raw) {
   })
 }
 
-const ROLE_STATUS_LABELS = {
-  1: 'Incomplete',
-  2: 'Pending',
-  3: 'Active',
-  4: 'Rejected',
-  5: 'Blocked',
-  6: 'Access Removed',
-  7: 'Offboarded'
-}
-
 const AMR_LABELS = {
   one: 'GOV.UK One Login',
   scp: 'Government Gateway',
@@ -86,6 +76,20 @@ const AMR_LABELS = {
 function enrichUserFromStore (user) {
   relStore.merge(user)
   const stored = relStore.get(user.sub)
+
+  // Soft-delete service_team_members rows for orgs no longer in the JWT.
+  // Only runs when the JWT is complete (relationships.length >= enrolmentCount).
+  const currentOrgIds = (user.relationships || []).map((r) => r.organisationId).filter(Boolean)
+  relStore.softDeleteStaleOrgMemberships(user.sub, currentOrgIds, user.enrolmentCount || 0)
+
+  // Register (or re-activate) the user for their current org.
+  const currentRel = (stored.relationships || []).find(
+    (r) => r.relationshipId === user.currentRelationshipId
+  )
+  if (currentRel && currentRel.organisationId) {
+    relStore.registerMember(currentRel.organisationId, { ...user, ...stored })
+  }
+
   return {
     ...user,
     relationships: stored.relationships,
@@ -103,11 +107,6 @@ function parseTokenClaims (tokenSet) {
 
   const relationships = parseRelationships(claims.relationships)
   const roles = parseRoles(claims.roles)
-
-  const enrichedRoles = roles.map((r) => ({
-    ...r,
-    statusLabel: ROLE_STATUS_LABELS[parseInt(r.status, 10)] || r.status
-  }))
 
   const rawAmr = claims.amr
   const amrList = Array.isArray(rawAmr) ? rawAmr : (rawAmr ? [rawAmr] : [])
@@ -131,7 +130,7 @@ function parseTokenClaims (tokenSet) {
     enrolmentRequestCount: claims.enrolmentRequestCount ?? 0,
     currentRelationshipId: claims.currentRelationshipId,
     relationships,
-    roles: enrichedRoles
+    roles
   }
 }
 

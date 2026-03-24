@@ -1,0 +1,17 @@
+{% extends "layouts/base.njk" %}
+
+{% block pageTitle %}Access denied – {{ serviceName }}{% endblock %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <h1 class="govuk-heading-xl">Access denied</h1>
+      <p class="govuk-body">
+        {{ message or "You do not have permission to access this page." }}
+      </p>
+      <p class="govuk-body">
+        <a href="/account" class="govuk-link">Go to your account</a>
+      </p>
+    </div>
+  </div>
+{% endblock %}

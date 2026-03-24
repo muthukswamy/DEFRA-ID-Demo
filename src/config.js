@@ -42,6 +42,7 @@ const config = Object.freeze({
     name: 'DEFRA Mock Service',
     phase: 'BETA',
     accountUrl: process.env.DEFRA_ACCOUNT_URL || '#',
+    accountManagementBaseUrl: (process.env.DEFRA_ACCOUNT_URL || '').replace(/\/me$/, '') || null,
     enrollOrgUrl: process.env.DEFRA_ENROL_ORG_URL ||
       (process.env.DEFRA_ACCOUNT_URL || '').replace(
         /\/management\/.*$/,
