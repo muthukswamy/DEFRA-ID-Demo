@@ -1,0 +1,86 @@
+{% extends "layouts/base.njk" %}
+
+{% block pageTitle %}{{ record.title }} – {{ serviceName }}{% endblock %}
+
+{% block beforeContent %}
+  {{ govukBreadcrumbs({
+    items: [
+      { text: "Dashboard", href: "/dashboard" },
+      { text: "Records", href: "/records" },
+      { text: record.title }
+    ]
+  }) }}
+{% endblock %}
+
+{% block content %}
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <span class="govuk-caption-xl">{{ currentOrg.organisationName }}</span>
+      <h1 class="govuk-heading-xl">{{ record.title }}</h1>
+
+      {% if record.description %}
+        <p class="govuk-body-l">{{ record.description }}</p>
+      {% endif %}
+
+      {% if record.body %}
+        <div class="govuk-body" style="white-space: pre-wrap">{{ record.body }}</div>
+        <hr class="govuk-section-break govuk-section-break--m govuk-section-break--visible">
+      {% endif %}
+
+      {{ govukSummaryList({
+        rows: [
+          {
+            key: { text: "Owner" },
+            value: { text: record.ownerName }
+          },
+          {
+            key: { text: "Created" },
+            value: { text: record.createdAtFormatted }
+          },
+          {
+            key: { text: "Last updated" },
+            value: { text: record.updatedAtFormatted }
+          },
+          {
+            key: { text: "Your access" },
+            value: { html: "<strong class='govuk-tag govuk-tag--" + userPermissionColour + "'>" + userPermission + "</strong>" }
+          }
+        ]
+      }) }}
+
+      <div class="govuk-button-group">
+        {% if canEdit %}
+          <a href="/records/{{ record.id }}/edit" class="govuk-button govuk-button--secondary">Edit record</a>
+        {% endif %}
+        {% if userPermission == "owner" %}
+          <a href="/records/{{ record.id }}/share" class="govuk-button govuk-button--secondary">Manage sharing</a>
+          <a href="/records/{{ record.id }}/history" class="govuk-button govuk-button--secondary">View history</a>
+          <a href="/records/{{ record.id }}/delete" class="govuk-button govuk-button--warning">Delete record</a>
+        {% endif %}
+      </div>
+
+    </div>
+
+    {% if userPermission == "owner" and (grants or adminGrant) %}
+      <div class="govuk-grid-column-one-third">
+        <h2 class="govuk-heading-m">Who has access</h2>
+        <ul class="govuk-list govuk-list--bullet govuk-body-s">
+          {% if adminGrant %}
+            <li>All org admins — <strong>{{ adminGrant.permission }}</strong></li>
+          {% endif %}
+          {% for g in grants %}
+            {% if g.grantee == "__org__" %}
+              <li>Whole organisation — <strong>{{ g.permission }}</strong></li>
+            {% else %}
+              <li>{{ g.displayName or g.email or g.grantee }} — <strong>{{ g.permission }}</strong></li>
+            {% endif %}
+          {% endfor %}
+        </ul>
+        <a href="/records/{{ record.id }}/share" class="govuk-link govuk-body-s">Manage sharing</a>
+      </div>
+    {% endif %}
+
+  </div>
+
+{% endblock %}

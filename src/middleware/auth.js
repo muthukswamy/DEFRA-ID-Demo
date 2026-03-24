@@ -2,6 +2,7 @@
 
 const { getOidcClient } = require('../config')
 const relStore = require('../store/relationships')
+const { claimOrphanedRecords } = require('../store/records')
 
 /**
  * Decode a JWT payload without verification (claims already validated by openid-client).
@@ -88,6 +89,9 @@ function enrichUserFromStore (user) {
   )
   if (currentRel && currentRel.organisationId) {
     relStore.registerMember(currentRel.organisationId, { ...user, ...stored })
+    if (relStore.getServiceRole(currentRel.organisationId, user.sub) === 'admin') {
+      claimOrphanedRecords(currentRel.organisationId, user.sub)
+    }
   }
 
   return {

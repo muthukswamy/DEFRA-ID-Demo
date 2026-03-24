@@ -1,0 +1,71 @@
+{% extends "layouts/base.njk" %}
+{% from "govuk/components/input/macro.njk" import govukInput %}
+{% from "govuk/components/textarea/macro.njk" import govukTextarea %}
+{% from "govuk/components/error-summary/macro.njk" import govukErrorSummary %}
+
+{% block pageTitle %}Edit {{ record.title }} – {{ serviceName }}{% endblock %}
+
+{% block beforeContent %}
+  {{ govukBreadcrumbs({
+    items: [
+      { text: "Dashboard", href: "/dashboard" },
+      { text: "Records", href: "/records" },
+      { text: record.title, href: "/records/" + record.id },
+      { text: "Edit" }
+    ]
+  }) }}
+{% endblock %}
+
+{% block content %}
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <span class="govuk-caption-xl">{{ currentOrg.organisationName }}</span>
+      <h1 class="govuk-heading-xl">Edit record</h1>
+
+      {% if errors %}
+        {{ govukErrorSummary({
+          titleText: "There is a problem",
+          errorList: [
+            { text: errors.title.text, href: "#title" }
+          ]
+        }) }}
+      {% endif %}
+
+      <form method="POST" action="/records/{{ record.id }}/edit" novalidate>
+        {{ govukInput({
+          label: { text: "Title", classes: "govuk-label--m" },
+          id: "title",
+          name: "title",
+          value: record.title,
+          errorMessage: (errors.title if errors else null)
+        }) }}
+
+        {{ govukTextarea({
+          label: { text: "Description", classes: "govuk-label--m" },
+          hint: { text: "A short summary of what this record is about." },
+          id: "description",
+          name: "description",
+          value: record.description or "",
+          rows: 3
+        }) }}
+
+        {{ govukTextarea({
+          label: { text: "Body", classes: "govuk-label--m" },
+          hint: { text: "The main content of this record." },
+          id: "body",
+          name: "body",
+          value: record.body or "",
+          rows: 8
+        }) }}
+
+        <div class="govuk-button-group">
+          {{ govukButton({ text: "Save changes" }) }}
+          <a href="/records/{{ record.id }}" class="govuk-link">Cancel</a>
+        </div>
+      </form>
+
+    </div>
+  </div>
+
+{% endblock %}

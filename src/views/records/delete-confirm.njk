@@ -1,0 +1,30 @@
+{% extends "layouts/base.njk" %}
+
+{% block pageTitle %}Delete {{ record.title }} – {{ serviceName }}{% endblock %}
+
+{% block beforeContent %}
+  {{ govukBreadcrumbs({
+    items: [
+      { text: "Dashboard", href: "/dashboard" },
+      { text: "Records", href: "/records" },
+      { text: record.title, href: "/records/" + record.id },
+      { text: "Delete" }
+    ]
+  }) }}
+{% endblock %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <h1 class="govuk-heading-xl">Delete record</h1>
+      <p class="govuk-body">Are you sure you want to delete <strong>{{ record.title }}</strong>?</p>
+      <p class="govuk-body">This action cannot be undone.</p>
+      <div class="govuk-button-group">
+        <form method="POST" action="/records/{{ record.id }}/delete">
+          {{ govukButton({ text: "Delete record", classes: "govuk-button--warning" }) }}
+        </form>
+        <a href="/records/{{ record.id }}" class="govuk-link">Cancel</a>
+      </div>
+    </div>
+  </div>
+{% endblock %}

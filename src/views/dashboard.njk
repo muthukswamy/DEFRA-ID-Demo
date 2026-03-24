@@ -29,10 +29,6 @@
           Your service role:
           {% if serviceRole == "admin" %}
             {{ govukTag({ text: "Admin", classes: "govuk-tag--green" }) }}
-          {% elif serviceRole == "editor" %}
-            {{ govukTag({ text: "Editor", classes: "govuk-tag--blue" }) }}
-          {% elif serviceRole == "viewer" %}
-            {{ govukTag({ text: "Viewer", classes: "govuk-tag--grey" }) }}
           {% else %}
             {{ govukTag({ text: "Member", classes: "govuk-tag--grey" }) }}
           {% endif %}

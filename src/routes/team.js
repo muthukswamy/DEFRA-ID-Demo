@@ -6,8 +6,6 @@ const { config } = require('../config')
 
 const ROLE_LABELS = {
   admin: 'Admin',
-  editor: 'Editor',
-  viewer: 'Viewer',
   member: 'Member'
 }
 

@@ -1,0 +1,76 @@
+{% extends "layouts/base.njk" %}
+
+{% block pageTitle %}History – {{ record.title }} – {{ serviceName }}{% endblock %}
+
+{% block beforeContent %}
+  {{ govukBreadcrumbs({
+    items: [
+      { text: "Dashboard", href: "/dashboard" },
+      { text: "Records", href: "/records" },
+      { text: record.title, href: "/records/" + record.id },
+      { text: "History" }
+    ]
+  }) }}
+{% endblock %}
+
+{% block content %}
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <span class="govuk-caption-xl">{{ currentOrg.organisationName }}</span>
+      <h1 class="govuk-heading-xl">Record history</h1>
+      <p class="govuk-body">Full audit trail for <strong>{{ record.title }}</strong>.</p>
+
+      {% if history and history.length > 0 %}
+        <table class="govuk-table">
+          <thead class="govuk-table__head">
+            <tr class="govuk-table__row">
+              <th class="govuk-table__header">Date</th>
+              <th class="govuk-table__header">Type</th>
+              <th class="govuk-table__header">Event</th>
+            </tr>
+          </thead>
+          <tbody class="govuk-table__body">
+            {% for h in history %}
+              <tr class="govuk-table__row">
+                <td class="govuk-table__cell govuk-body-s" style="white-space:nowrap">{{ h.occurredAtFormatted }}</td>
+                <td class="govuk-table__cell">
+                  {% if h.event == "created" or h.event == "updated" or h.event == "deleted" %}
+                    <strong class="govuk-tag govuk-tag--grey">Content</strong>
+                  {% elif h.event == "owner_claimed" %}
+                    <strong class="govuk-tag govuk-tag--purple">Ownership</strong>
+                  {% else %}
+                    <strong class="govuk-tag govuk-tag--blue">Access</strong>
+                  {% endif %}
+                </td>
+                <td class="govuk-table__cell govuk-body-s">
+                  {% if h.event == "created" %}
+                    Created by <strong>{{ h.actorName }}</strong>
+                  {% elif h.event == "updated" %}
+                    Updated by <strong>{{ h.actorName }}</strong>
+                  {% elif h.event == "deleted" %}
+                    Deleted by <strong>{{ h.actorName }}</strong>
+                  {% elif h.event == "permission_granted" %}
+                    <strong>{{ h.actorName }}</strong> granted <strong>{{ h.targetName }}</strong> {{ h.detail }} access
+                  {% elif h.event == "permission_revoked" %}
+                    <strong>{{ h.actorName }}</strong> removed {{ h.targetName }}'s access
+                  {% elif h.event == "owner_claimed" %}
+                    Ownership transferred from <strong>{{ h.targetName }}</strong> to <strong>{{ h.actorName }}</strong>
+                  {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        {{ govukInsetText({ text: "No history recorded for this record." }) }}
+      {% endif %}
+
+      <p class="govuk-body govuk-!-margin-top-4">
+        <a href="/records/{{ record.id }}" class="govuk-link">Back to record</a>
+      </p>
+
+    </div>
+  </div>
+
+{% endblock %}

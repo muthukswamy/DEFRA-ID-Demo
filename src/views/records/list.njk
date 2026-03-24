@@ -1,0 +1,58 @@
+{% extends "layouts/base.njk" %}
+
+{% block pageTitle %}Records – {{ serviceName }}{% endblock %}
+
+{% block beforeContent %}
+  {{ govukBreadcrumbs({
+    items: [
+      { text: "Dashboard", href: "/dashboard" },
+      { text: "Records" }
+    ]
+  }) }}
+{% endblock %}
+
+{% block content %}
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <span class="govuk-caption-xl">{{ currentOrg.organisationName }}</span>
+      <h1 class="govuk-heading-xl">Records</h1>
+    </div>
+    <div class="govuk-grid-column-one-third govuk-!-text-align-right govuk-!-padding-top-6">
+      <a href="/records/new" class="govuk-button govuk-!-margin-bottom-0">Create record</a>
+    </div>
+  </div>
+
+  {% if deleted %}
+    {{ govukNotificationBanner({
+      type: "success",
+      titleText: "Record deleted",
+      text: "The record has been deleted."
+    }) }}
+  {% endif %}
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-full">
+
+      {% if hasRecords %}
+        {{ govukTable({
+          head: [
+            { text: "Title" },
+            { text: "Description" },
+            { text: "Owner" },
+            { text: "Your access" },
+            { text: "Created" },
+            { text: "Actions" }
+          ],
+          rows: recordRows
+        }) }}
+      {% else %}
+        {{ govukInsetText({
+          text: "No records yet. Create the first one."
+        }) }}
+      {% endif %}
+
+    </div>
+  </div>
+
+{% endblock %}

@@ -98,7 +98,8 @@ const init = async () => {
     ...require('./routes/index'),
     ...require('./routes/auth'),
     ...require('./routes/dashboard'),
-    ...require('./routes/team')
+    ...require('./routes/team'),
+    ...require('./routes/records')
   ])
 
   // ---------------------------------------------------------------------------
@@ -109,9 +110,10 @@ const init = async () => {
 
     if (response.isBoom) {
       const statusCode = response.output.statusCode
+      const yar = request.yar
       const ctx = {
-        isAuthenticated: !!request.yar.get('tokens'),
-        user: request.yar.get('user')
+        isAuthenticated: !!(yar && yar.get('tokens')),
+        user: yar && yar.get('user')
       }
       if (statusCode === 404) {
         return h.view('errors/404.njk', ctx).code(404)
@@ -122,7 +124,7 @@ const init = async () => {
 
     // Inject isAuthenticated + user into every view context
     if (response.variety === 'view') {
-      const tokens = request.yar.get('tokens')
+      const tokens = request.yar ? request.yar.get('tokens') : null
       const isAuthenticated = !!tokens
       let sessionExpiringSoon = false
       if (isAuthenticated && tokens.expires_at) {
@@ -132,7 +134,7 @@ const init = async () => {
       response.source.context = Object.assign(
         {
           isAuthenticated,
-          user: request.yar.get('user'),
+          user: request.yar ? request.yar.get('user') : null,
           sessionExpiringSoon,
           hasRefreshToken: !!(tokens && tokens.refresh_token),
           currentPath: request.path
