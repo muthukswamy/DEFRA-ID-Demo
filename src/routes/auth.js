@@ -74,7 +74,7 @@ module.exports = [
       if (config.oidc.aal) extra.aal = config.oidc.aal
       if (config.oidc.forceMFA) extra.forceMFA = config.oidc.forceMFA
       if (config.oidc.forceReselection) extra.forceReselection = config.oidc.forceReselection
-      if (config.oidc.relationshipId) extra.relationshipId = config.oidc.relationshipId
+      if (request.query.relationshipId) extra.relationshipId = request.query.relationshipId
       return h.redirect(await buildAuthUrl(extra))
     }
   },

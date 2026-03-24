@@ -95,7 +95,6 @@ The SQLite database files are created automatically in `data/` on first run — 
 | `DEFRA_ID_AAL` | — | No | Assurance level (`1` = password, `2` = MFA) |
 | `DEFRA_ID_FORCE_MFA` | — | No | Force MFA on every sign-in |
 | `DEFRA_ID_FORCE_RESELECTION` | — | No | Prompt org reselection for multi-org users |
-| `DEFRA_ID_RELATIONSHIP_ID` | — | No | Pre-select a known relationship ID |
 | `DEFRA_ACCOUNT_URL` | — | **Yes** | DEFRA account management base URL |
 | `DEFRA_ENROL_ORG_URL` | *(derived)* | No | Override org enrolment journey URL |
 

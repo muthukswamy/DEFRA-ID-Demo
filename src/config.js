@@ -34,8 +34,7 @@ const config = Object.freeze({
     refreshTokens: process.env.DEFRA_ID_REFRESH_TOKENS !== 'false',
     aal: process.env.DEFRA_ID_AAL || undefined,
     forceMFA: process.env.DEFRA_ID_FORCE_MFA || undefined,
-    forceReselection: process.env.DEFRA_ID_FORCE_RESELECTION || undefined,
-    relationshipId: process.env.DEFRA_ID_RELATIONSHIP_ID || undefined
+    forceReselection: process.env.DEFRA_ID_FORCE_RESELECTION || undefined
   },
 
   service: {
