@@ -124,6 +124,18 @@ src/
     └── *.njk            — Dashboard, account, team, signed-out pages
 ```
 
+## Documentation
+
+| Document | Description |
+|---|---|
+| [docs/architecture.md](docs/architecture.md) | Stack, request lifecycle, module map, security posture |
+| [docs/authentication.md](docs/authentication.md) | OIDC/PKCE flow, token lifecycle, JWT claim parsing, sign-out |
+| [docs/authorisation.md](docs/authorisation.md) | Service roles, FGA permission model, grant types, audit history |
+| [docs/data-model.md](docs/data-model.md) | Database tables, columns, relationships, schema evolution |
+| [docs/team-management.md](docs/team-management.md) | Membership lifecycle, role assignment, orphaned records |
+| [docs/records.md](docs/records.md) | Record CRUD, sharing, history, admin access, routes |
+| [docs/sessions.md](docs/sessions.md) | Session storage, TTL, cookie config, Redis migration |
+
 ## Sessions
 
 Sessions are stored server-side in SQLite (`data/sessions.db`). The browser cookie holds only an encrypted session ID. To switch to Redis in production, replace the `CatboxSqlite` cache provider in `src/server.js` with [`@hapi/catbox-redis`](https://github.com/hapijs/catbox-redis).
